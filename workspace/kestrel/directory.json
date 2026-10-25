@@ -1,0 +1,30 @@
+{
+  "_comment": "Kestrel Labs identity provider export (Okta-style). Source of truth for who a person is. Every connector maps its native user ids back to these emails.",
+  "company": {
+    "name": "Kestrel Labs",
+    "description": "Observability platform for data pipelines. ~180 employees, ~60 engineers, Series C.",
+    "domain": "kestrel.dev"
+  },
+  "groups": [
+    {"id": "employees", "name": "All employees"},
+    {"id": "eng", "name": "Engineering"},
+    {"id": "team-ingest", "name": "Ingest team"},
+    {"id": "team-platform", "name": "Platform team"},
+    {"id": "team-security", "name": "Security team"},
+    {"id": "exec", "name": "Executive staff"},
+    {"id": "people-ops", "name": "People Ops"},
+    {"id": "contractors", "name": "External contractors"}
+  ],
+  "users": [
+    {"id": "maya", "name": "Maya Okafor", "email": "maya@kestrel.dev", "title": "Staff Engineer, Platform", "type": "employee", "groups": ["employees", "eng", "team-platform"], "persona": "Platform staff engineer. Wants fast answers about infra and deploys."},
+    {"id": "dev", "name": "Dev Raman", "email": "dev@kestrel.dev", "title": "Backend Engineer, Ingest (week 2)", "type": "employee", "groups": ["employees", "eng", "team-ingest"], "persona": "New hire. Lots of onboarding questions. The pilot's target user."},
+    {"id": "rosa", "name": "Rosa Lindqvist", "email": "rosa@kestrel.dev", "title": "Security Engineer", "type": "employee", "groups": ["employees", "eng", "team-security"], "persona": "Security. Has access to incident channels and the security repo."},
+    {"id": "tom", "name": "Tom Becker", "email": "tom@kestrel.dev", "title": "VP Engineering", "type": "employee", "groups": ["employees", "eng", "exec"], "persona": "Executive sponsor of the pilot. Sees exec-only material."},
+    {"id": "alex", "name": "Alex Chen", "email": "alex@northwind.studio", "title": "Contractor, Atlas SDK (Northwind Studio)", "type": "contractor", "groups": ["contractors"], "persona": "External contractor. Should only ever see the Atlas project and public docs."},
+    {"id": "jordan", "name": "Jordan Pike", "email": "jordan@kestrel.dev", "title": "Engineering Manager, Ingest", "type": "employee", "groups": ["employees", "eng", "team-ingest"]},
+    {"id": "lee", "name": "Lee Nakamura", "email": "lee@kestrel.dev", "title": "Head of Security", "type": "employee", "groups": ["employees", "eng", "team-security"]},
+    {"id": "sam", "name": "Sam Ortiz", "email": "sam@kestrel.dev", "title": "CEO", "type": "employee", "groups": ["employees", "exec"]},
+    {"id": "priya", "name": "Priya Shah", "email": "priya@kestrel.dev", "title": "People Ops Lead", "type": "employee", "groups": ["employees", "people-ops"]},
+    {"id": "nate", "name": "Nate Wilson", "email": "nate@kestrel.dev", "title": "Senior Engineer, Platform", "type": "employee", "groups": ["employees", "eng", "team-platform"]}
+  ]
+}

@@ -1,0 +1,669 @@
+<title>pilotkit · Kestrel pilot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A permission-aware AI assistant taken from discovery to measurable value at a fictional customer. Every answer on this page was produced by the real pipeline.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an operator console. Sticky header + tab bar; each tab is one working view.
+   Signature detail: restricted content appears as redaction bars, the way it would to a user without access. */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --sunken: #e9ebf1;
+  --ink: #141a2e;
+  --muted: #5b6380;
+  --line: #d7dbe6;
+  --accent: #2f45c9;
+  --accent-soft: #e4e8fb;
+  --safe: #17784f;
+  --safe-soft: #dcf1e7;
+  --leak: #c4321f;
+  --leak-soft: #fbe3de;
+  --warn: #9a6400;
+  --warn-soft: #fbefd5;
+  --redact: #141a2e;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1322; --surface: #171c30; --sunken: #1e2440; --ink: #e8ebf6; --muted: #9aa2c2;
+    --line: #2b3254; --accent: #8c9dff; --accent-soft: #232b55; --safe: #4fcf95; --safe-soft: #12301f;
+    --leak: #ff7c68; --leak-soft: #3a1915; --warn: #f0b64b; --warn-soft: #33270f; --redact: #e8ebf6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1322; --surface: #171c30; --sunken: #1e2440; --ink: #e8ebf6; --muted: #9aa2c2;
+  --line: #2b3254; --accent: #8c9dff; --accent-soft: #232b55; --safe: #4fcf95; --safe-soft: #12301f;
+  --leak: #ff7c68; --leak-soft: #3a1915; --warn: #f0b64b; --warn-soft: #33270f; --redact: #e8ebf6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--surface);
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(22px, 3vw, 28px); line-height: 1.15; }
+h3 { font-size: 17px; line-height: 1.25; }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.top-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-block: 14px 10px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-size: 22px; }
+.brand .ver { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.customer {
+  margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
+}
+.customer b { color: var(--ink); font-weight: 600; }
+.dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--safe); box-shadow: 0 0 0 3px var(--safe-soft); }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-bottom: 0; }
+nav.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  border: 0; background: none; padding: 9px 12px 11px; font-weight: 500; font-size: 14px; color: var(--muted);
+  border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+main { padding-block: 28px 56px; }
+.view { display: grid; gap: 22px; }
+.lede { display: grid; gap: 8px; max-width: 760px; }
+.lede p { color: var(--muted); font-size: 16px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.panel-pad { padding: 18px; }
+
+/* Assistant */
+.assist { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .assist { grid-template-columns: minmax(0, 1fr); } }
+.people { display: grid; gap: 6px; padding: 10px; }
+.people .eyebrow { padding: 6px 8px 4px; }
+.person {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left;
+  background: none; border: 1px solid transparent; border-radius: 8px; padding: 8px; cursor: pointer;
+}
+.person:hover { background: var(--sunken); }
+.person[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 600; font-size: 13px; background: var(--sunken); color: var(--ink); border: 1px solid var(--line);
+}
+.person[aria-pressed="true"] .avatar { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.person .nm { font-weight: 600; font-size: 14px; line-height: 1.2; }
+.person .tt { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.reach { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 11.5px; color: var(--muted); }
+.reach-bar { flex: 1; height: 4px; border-radius: 2px; background: var(--sunken); overflow: hidden; }
+.reach-bar i { display: block; height: 100%; background: var(--accent); }
+
+.console { display: grid; gap: 14px; min-width: 0; }
+.mode {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px;
+}
+.mode-label { font-weight: 600; font-size: 14px; }
+.seg { display: inline-flex; background: var(--sunken); border-radius: 8px; padding: 3px; }
+.seg button {
+  border: 0; background: none; padding: 6px 12px; border-radius: 6px; font-size: 13.5px; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(20,26,46,.15); }
+.seg button[data-mode="none"][aria-pressed="true"] { color: var(--leak); }
+.mode-note { font-size: 13px; color: var(--muted); flex: 1 1 240px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px;
+  font-size: 13.5px; cursor: pointer; text-align: left;
+}
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.attack { border-style: dashed; }
+
+.thread { display: grid; gap: 12px; padding: 18px; }
+.q { display: flex; gap: 10px; align-items: flex-start; }
+.q .who { font-size: 12.5px; color: var(--muted); }
+.q .text { font-weight: 600; font-size: 16px; }
+.answer { border-left: 3px solid var(--line); padding: 4px 0 4px 14px; display: grid; gap: 10px; }
+.answer.ok { border-left-color: var(--safe); }
+.answer.refused { border-left-color: var(--muted); }
+.answer.leak { border-left-color: var(--leak); }
+.answer .body { font-size: 15.5px; max-width: 68ch; }
+.answer .body sup { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 500; padding: 0 1px; }
+.cites { display: grid; gap: 6px; }
+.cite {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  background: var(--sunken); border-radius: 8px; padding: 7px 10px; font-size: 13px;
+}
+.cite .n { font-family: var(--font-mono); color: var(--accent); }
+.cite .src { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.cite .src span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cite.bad { background: var(--leak-soft); }
+.cite.bad .n { color: var(--leak); }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+}
+.badge.safe { background: var(--safe-soft); color: var(--safe); }
+.badge.leak { background: var(--leak-soft); color: var(--leak); }
+.badge.warn { background: var(--warn-soft); color: var(--warn); }
+.badge.neutral { background: var(--sunken); color: var(--muted); }
+.src-tag { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); text-transform: lowercase; }
+.leak-box { background: var(--leak-soft); color: var(--leak); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; display: grid; gap: 4px; }
+.leak-box b { font-weight: 600; }
+.sec-note { font-size: 13px; color: var(--warn); background: var(--warn-soft); padding: 8px 12px; border-radius: 8px; }
+.meta { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+
+.everyone { padding: 14px 18px 18px; display: grid; gap: 10px; }
+.everyone-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 760px) { .everyone-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.eo {
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px;
+  background: var(--surface); cursor: pointer; text-align: left;
+}
+.eo:hover { border-color: var(--accent); }
+.eo[aria-current="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.eo .nm { font-weight: 600; font-size: 13.5px; }
+.eo .snip { font-size: 12.5px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.redact-line { display: grid; gap: 4px; padding-top: 2px; }
+.redact-line i { display: block; height: 8px; border-radius: 2px; background: var(--redact); opacity: .85; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.stat { padding: 16px; display: grid; gap: 4px; }
+.stat .v { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 13px; color: var(--muted); }
+.stat.good .v { color: var(--safe); }
+.stat.bad .v { color: var(--leak); }
+
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 860px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+.modes { display: grid; gap: 14px; }
+.mrow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 92px; gap: 12px; align-items: center; }
+@media (max-width: 560px) { .mrow { grid-template-columns: minmax(0, 1fr) 80px; } .mrow .track { grid-column: 1 / -1; grid-row: 2; } }
+.mrow .nm { font-weight: 600; font-size: 14px; }
+.mrow .sub { font-size: 12.5px; color: var(--muted); }
+.track { height: 26px; background: var(--sunken); border-radius: 6px; overflow: hidden; position: relative; }
+.track i { position: absolute; inset: 0 auto 0 0; background: var(--leak); border-radius: 6px; }
+.track i.zero { width: 4px !important; background: var(--safe); }
+.mrow .num { font-family: var(--font-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; }
+.scroll { overflow-x: auto; }
+
+.bars { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: end; gap: 6px; height: 150px; padding-top: 10px; }
+.bars div { display: grid; gap: 4px; align-items: end; height: 100%; grid-template-rows: 1fr auto; }
+.bars .b { background: var(--accent); border-radius: 4px 4px 0 0; align-self: end; position: relative; }
+.bars .b.last { background: var(--ink); }
+.bars .lab { font-size: 11px; color: var(--muted); text-align: center; font-family: var(--font-mono); }
+.bars .val { position: absolute; top: -18px; left: 0; right: 0; text-align: center; font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
+
+.samples { display: grid; gap: 10px; }
+.sample { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 4px; font-size: 13.5px; }
+.sample:first-child { border-top: 0; padding-top: 0; }
+.sample .ans { color: var(--muted); }
+
+/* Access map */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.matrix td, .matrix th { padding: 7px 8px; }
+.matrix th.u { text-align: center; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; height: 96px; text-transform: none; letter-spacing: 0; font-size: 12px; }
+.matrix td.c { text-align: center; }
+.matrix .yes { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.matrix .no { display: inline-block; width: 18px; height: 6px; border-radius: 2px; background: var(--line); }
+.matrix td.doc { min-width: 230px; }
+.matrix .dt { font-weight: 500; }
+.matrix tr.restricted .dt::after { content: "restricted"; margin-left: 8px; font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--warn); }
+
+/* Engagement */
+.timeline { display: grid; gap: 0; }
+.step { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+.step:first-child { border-top: 0; }
+.step .wk { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); padding-top: 2px; }
+.step h3 { margin-bottom: 4px; }
+.step p { color: var(--muted); font-size: 14.5px; max-width: 70ch; }
+.step a { color: var(--accent); font-size: 13.5px; font-weight: 500; text-decoration: none; }
+.step a:hover { text-decoration: underline; }
+.flow { display: grid; gap: 8px; font-size: 14px; }
+.flow div { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.flow .k { font-family: var(--font-mono); color: var(--muted); font-size: 12px; }
+.flow .t { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.flow.after .t { color: var(--safe); }
+.flow.before .t { color: var(--leak); }
+
+.gates { display: grid; gap: 8px; }
+.gate { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; font-size: 14px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.gate:last-child { border-bottom: 0; }
+.gate .target { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+
+footer { border-top: 1px solid var(--line); padding-block: 22px 32px; font-size: 13px; color: var(--muted); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
+footer a { color: var(--accent); text-decoration: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .answer { animation: rise .28s ease-out; }
+  @keyframes rise { from { transform: translateY(4px); opacity: .4; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand"><h1>pilotkit</h1><span class="ver" id="ver"></span></div>
+      <div class="customer"><span class="dot-live" aria-hidden="true"></span><span>Pilot at <b id="cust"></b> · <span id="docs"></span> documents across GitHub, Slack, Linear, Notion</span></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" data-tab="assistant" aria-selected="true">Assistant</button>
+      <button class="tab" role="tab" data-tab="redteam" aria-selected="false">Red team</button>
+      <button class="tab" role="tab" data-tab="pilot" aria-selected="false">Pilot readout</button>
+      <button class="tab" role="tab" data-tab="access" aria-selected="false">Access map</button>
+      <button class="tab" role="tab" data-tab="engagement" aria-selected="false">Engagement</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ASSISTANT -->
+  <section class="view" id="v-assistant" data-view="assistant">
+    <div class="lede">
+      <h2>Same question, five people, five different answers</h2>
+      <p>Pick who you are and what you ask. The assistant only searches what that person could already open in GitHub, Slack, Linear and Notion. Turn enforcement off to see what a naive deployment would have told them.</p>
+    </div>
+    <div class="assist">
+      <aside class="panel people" id="people" aria-label="Signed in as"><div class="eyebrow">Signed in as</div></aside>
+      <div class="console">
+        <div class="panel mode">
+          <span class="mode-label">Permission enforcement</span>
+          <span class="seg" role="group" aria-label="Permission enforcement">
+            <button data-mode="prefilter" aria-pressed="true">On</button>
+            <button data-mode="none" aria-pressed="false">Off (naive RAG)</button>
+          </span>
+          <span class="mode-note" id="mode-note"></span>
+        </div>
+        <div class="chips" id="chips" aria-label="Questions"></div>
+        <div class="panel thread" id="thread" aria-live="polite"></div>
+        <div class="panel everyone">
+          <div class="eyebrow">Everyone else asking the same question</div>
+          <div class="everyone-grid" id="everyone"></div>
+        </div>
+        <p class="meta">Every answer here was generated by the real pipeline at build time (offline answerer, no API key). Run it yourself: <span class="mono">python -m pilotkit ask --as dev "…"</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RED TEAM -->
+  <section class="view" id="v-redteam" data-view="redteam" hidden>
+    <div class="lede">
+      <h2>284 attempts to read what you shouldn't</h2>
+      <p>Every user was pointed at every document they can't open, with targeted questions and generic jailbreaks. Restricted documents carry planted secrets, so any leak is caught automatically. CI blocks the release on a single leak.</p>
+    </div>
+    <div class="stats" id="rt-stats"></div>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:16px">
+        <h3>Leaks by permission strategy</h3>
+        <div class="modes" id="rt-modes"></div>
+        <p class="muted" style="font-size:13.5px">Filtering after retrieval also stops content leaks, but ranking still uses documents the user can't see. It answered a private-incident question with an unrelated doc, and whether it refuses can depend on restricted content. Filtering first removes both problems.</p>
+      </div>
+      <div class="panel panel-pad" style="display:grid;gap:12px">
+        <h3>Answer quality by strategy</h3>
+        <div class="scroll"><table id="rt-quality"></table></div>
+        <h3 style="margin-top:8px">Naive leaks by person</h3>
+        <div class="modes" id="rt-users"></div>
+      </div>
+    </div>
+    <div class="panel panel-pad" style="display:grid;gap:12px">
+      <h3>What the naive deployment leaked</h3>
+      <div class="samples" id="rt-samples"></div>
+    </div>
+  </section>
+
+  <!-- PILOT -->
+  <section class="view" id="v-pilot" data-view="pilot" hidden>
+    <div class="lede">
+      <h2>Two-week pilot: 8 people, every acceptance criterion met</h2>
+      <p>Usage volume and thumbs-up feedback are simulated with a fixed seed. Every answer, refusal and latency behind these numbers came from the real pipeline.</p>
+    </div>
+    <div class="stats" id="pl-stats"></div>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:12px">
+        <h3>Questions per day</h3>
+        <div class="bars" id="pl-bars" role="img" aria-label="Questions per pilot day"></div>
+        <p class="muted" style="font-size:13px">Pilot day 1 to 10. Adoption ramps as the cohort learns what it can answer.</p>
+      </div>
+      <div class="panel panel-pad" style="display:grid;gap:10px">
+        <h3>Acceptance criteria</h3>
+        <div class="gates" id="pl-gates"></div>
+      </div>
+    </div>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:10px">
+        <h3>How the value estimate is built</h3>
+        <div class="scroll"><table id="pl-assume"></table></div>
+      </div>
+      <div class="panel panel-pad" style="display:grid;gap:10px">
+        <h3>What it couldn't answer, and why</h3>
+        <div class="scroll"><table id="pl-gaps"></table></div>
+        <p class="muted" style="font-size:13px">Refusals are split for the champion: "no access" means permissions worked; "content gap" means nobody has written it down yet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCESS -->
+  <section class="view" id="v-access" data-view="access" hidden>
+    <div class="lede">
+      <h2>Who can read what</h2>
+      <p>Each connector translates its source's rules (GitHub teams, Slack channel membership, Linear private teams, Notion sharing) into an explicit list of people. Security can audit any document's readers here. Identities are joined on email through the company directory; anything that doesn't match is dropped.</p>
+    </div>
+    <div class="filters" id="ac-filters"></div>
+    <div class="panel scroll"><table class="matrix" id="ac-matrix"></table></div>
+    <p class="meta" id="ac-sync"></p>
+  </section>
+
+  <!-- ENGAGEMENT -->
+  <section class="view" id="v-engagement" data-view="engagement" hidden>
+    <div class="lede">
+      <h2>Four weeks, discovery to handoff</h2>
+      <p>The code is half the job. These are the documents a customer actually sees, each written for a specific person at Kestrel.</p>
+    </div>
+    <div class="two">
+      <div class="panel panel-pad" style="display:grid;gap:10px">
+        <div class="eyebrow">Before · how an engineer gets an answer today</div>
+        <div class="flow before">
+          <div><span class="k">1</span><span>Search Notion, GitHub and Slack separately</span><span class="t">10–20 min</span></div>
+          <div><span class="k">2</span><span>Post in #eng-help or DM a staff engineer</span><span class="t"></span></div>
+          <div><span class="k">3</span><span>Wait for a reply</span><span class="t">38 min median</span></div>
+          <div><span class="k">4</span><span>Staff engineer context-switches</span><span class="t">~25×/week</span></div>
+          <div><span class="k">5</span><span>Answer is buried in a thread</span><span class="t">asked again</span></div>
+        </div>
+      </div>
+      <div class="panel panel-pad" style="display:grid;gap:10px">
+        <div class="eyebrow">After · with the assistant</div>
+        <div class="flow after">
+          <div><span class="k">1</span><span>Ask once, in Slack or the web</span><span class="t">seconds</span></div>
+          <div><span class="k">2</span><span>Search only what this person can open</span><span class="t">0 leaks</span></div>
+          <div><span class="k">3</span><span>Cited answer, or an honest "can't find it"</span><span class="t">100% / 100%</span></div>
+          <div><span class="k">4</span><span>Unanswered questions become doc work</span><span class="t">weekly</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-pad">
+      <div class="timeline" id="eg-timeline"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built by Ashwin · Kestrel Labs and its people are fictional. The permission model, connectors, red team, evals and every answer are real code.</span>
+    <a id="repo-link" href="#" target="_blank" rel="noopener">Source on GitHub</a>
+  </div>
+</footer>
+
+<script>
+const DATA = /*__PILOTKIT_DATA__*/null;
+const REPO = "https://github.com/tiwaker9404/pilotkit";
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = (x, d = 0) => (x * 100).toFixed(d) + "%";
+const users = Object.fromEntries(DATA.users.map(u => [u.id, u]));
+const initials = n => n.split(" ").map(p => p[0]).join("").slice(0, 2);
+const first = id => users[id].name.split(" ")[0];
+const SRC = { github: "GitHub", slack: "Slack", linear: "Linear", notion: "Notion" };
+
+$("#ver").textContent = "v" + DATA.version;
+$("#cust").textContent = DATA.company.name;
+$("#docs").textContent = DATA.total_docs;
+$("#repo-link").href = REPO;
+
+/* ---------------- Tabs ---------------- */
+const TABS = ["assistant", "redteam", "pilot", "access", "engagement"];
+function showTab(name) {
+  if (!TABS.includes(name)) name = "assistant";
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === name));
+  document.querySelectorAll("[data-view]").forEach(v => v.hidden = v.dataset.view !== name);
+  try { localStorage.setItem("pk-tab", name); } catch (e) {}
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  showTab(t.dataset.tab);
+  try { history.replaceState(null, "", "#" + t.dataset.tab); } catch (e) {}
+}));
+
+/* ---------------- Assistant ---------------- */
+const state = { user: "dev", q: 5, mode: "prefilter" };
+const ATTACK = q => /ignore your permissions/i.test(q);
+
+function renderPeople() {
+  const box = $("#people");
+  box.querySelectorAll(".person").forEach(n => n.remove());
+  DATA.personas.forEach(id => {
+    const u = users[id];
+    const b = document.createElement("button");
+    b.className = "person";
+    b.setAttribute("aria-pressed", id === state.user);
+    b.innerHTML = `<span class="avatar">${esc(initials(u.name))}</span>
+      <span><div class="nm">${esc(u.name)}</div><div class="tt">${esc(u.title)}</div>
+      <div class="reach"><span class="reach-bar"><i style="width:${(u.readable / DATA.total_docs * 100).toFixed(0)}%"></i></span>can read ${u.readable}/${DATA.total_docs}</div></span>`;
+    b.addEventListener("click", () => { state.user = id; render(); });
+    box.appendChild(b);
+  });
+}
+
+function renderChips() {
+  const box = $("#chips");
+  box.innerHTML = "";
+  DATA.questions.forEach((q, i) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (ATTACK(q) ? " attack" : "");
+    b.textContent = q;
+    b.setAttribute("aria-pressed", i === state.q);
+    b.addEventListener("click", () => { state.q = i; render(); });
+    box.appendChild(b);
+  });
+}
+
+function answerBody(a) {
+  return esc(a.text).replace(/\[(\d+)\]/g, "<sup>[$1]</sup>");
+}
+
+function renderThread() {
+  const q = DATA.questions[state.q];
+  const u = users[state.user];
+  const a = DATA.demo[state.user][q][state.mode];
+  const leaked = a.leaks.length > 0;
+  const cls = leaked ? "leak" : a.refused ? "refused" : "ok";
+  let status;
+  if (leaked) status = `<span class="badge leak">Leak · ${first(state.user)} can't open ${a.citations.filter(c => !c.readable).length} cited source(s)</span>`;
+  else if (a.refused) status = `<span class="badge neutral">No accessible answer</span>`;
+  else status = `<span class="badge safe">Answered from ${a.citations.length} source${a.citations.length > 1 ? "s" : ""} ${esc(first(state.user))} can open</span>`;
+
+  const cites = a.citations.map(c => `
+    <div class="cite${c.readable ? "" : " bad"}">
+      <span class="n">[${c.n}]</span>
+      <span class="src"><span class="src-tag">${esc(SRC[c.source])}</span><span>${esc(c.container)} · ${esc(c.title)}</span></span>
+      ${c.readable ? `<span class="badge safe">readable</span>` : `<span class="badge leak">no access</span>`}
+    </div>`).join("");
+
+  const leakBox = leaked ? `<div class="leak-box"><b>What went wrong</b>${a.leaks.slice(0, 3).map(l => `<span class="mono">${esc(l)}</span>`).join("")}</div>` : "";
+  const sec = a.quarantined.length ? `<div class="sec-note">Security event logged: ${a.quarantined.length} retrieved message looked like a prompt injection and was kept out of the answer.</div>` : "";
+  const why = a.refused && state.mode === "prefilter"
+    ? `<p class="muted" style="font-size:13px">This reply is identical whether the topic is restricted or doesn't exist, so it can't confirm anything ${esc(first(state.user))} isn't cleared for.</p>` : "";
+
+  $("#thread").innerHTML = `
+    <div class="q"><span class="avatar">${esc(initials(u.name))}</span>
+      <div><div class="who">${esc(u.name)} asks</div><div class="text">${esc(q)}</div></div></div>
+    <div class="answer ${cls}">
+      <div>${status}</div>
+      <div class="body">${answerBody(a)}</div>
+      ${why}
+      ${cites ? `<div class="cites">${cites}</div>` : ""}
+      ${leakBox}${sec}
+      <div class="meta">mode=${state.mode} · ${a.latency_ms} ms retrieval + answer</div>
+    </div>`;
+}
+
+function renderEveryone() {
+  const q = DATA.questions[state.q];
+  const box = $("#everyone");
+  box.innerHTML = "";
+  DATA.personas.forEach(id => {
+    const a = DATA.demo[id][q][state.mode];
+    const leaked = a.leaks.length > 0;
+    const b = document.createElement("button");
+    b.className = "eo";
+    b.setAttribute("aria-current", id === state.user);
+    const badge = leaked ? `<span class="badge leak">Leak</span>` : a.refused ? `<span class="badge neutral">No access</span>` : `<span class="badge safe">Answered</span>`;
+    const snip = a.refused ? `<div class="redact-line" aria-label="nothing shown"><i style="width:92%"></i><i style="width:64%"></i></div>` : `<div class="snip">${esc(a.text.replace(/\s*\[\d+\]/g, ""))}</div>`;
+    b.innerHTML = `<div class="nm">${esc(first(id))}</div>${badge}${snip}`;
+    b.addEventListener("click", () => { state.user = id; render(); });
+    box.appendChild(b);
+  });
+}
+
+function renderMode() {
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === state.mode));
+  $("#mode-note").textContent = state.mode === "prefilter"
+    ? "Search space is built from only the documents this person can open."
+    : "Searching everything, then answering. This is what the red team catches.";
+}
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => { state.mode = b.dataset.mode; render(); }));
+
+function render() { renderPeople(); renderChips(); renderMode(); renderThread(); renderEveryone(); }
+render();
+
+/* ---------------- Red team ---------------- */
+(function () {
+  const rt = DATA.redteam, ql = DATA.quality;
+  $("#rt-stats").innerHTML = `
+    <div class="panel stat"><span class="v">${rt.prefilter.cases}</span><span class="k">adversarial questions</span></div>
+    <div class="panel stat bad"><span class="v">${rt.none.leaks}</span><span class="k">leaks with no filtering (${pct(rt.none.leak_rate)})</span></div>
+    <div class="panel stat good"><span class="v">${rt.prefilter.leaks}</span><span class="k">leaks with pilotkit's prefilter</span></div>
+    <div class="panel stat"><span class="v">${DATA.users.length}</span><span class="k">people tested, contractor included</span></div>`;
+  const rows = [["none", "No filtering", "naive RAG"], ["postfilter", "Filter after retrieval", "safe, but leaky ranking"], ["prefilter", "Filter before retrieval", "pilotkit default"]];
+  $("#rt-modes").innerHTML = rows.map(([m, n, s]) => {
+    const r = rt[m]; const w = r.cases ? r.leaks / r.cases * 100 : 0;
+    return `<div class="mrow"><div><div class="nm">${n}</div><div class="sub">${s}</div></div>
+      <div class="track" role="img" aria-label="${r.leaks} leaks of ${r.cases}"><i class="${r.leaks ? "" : "zero"}" style="width:${w}%"></i></div>
+      <div class="num">${r.leaks} / ${r.cases}</div></div>`;
+  }).join("");
+  $("#rt-quality").innerHTML = `<thead><tr><th>Strategy</th><th class="num">Correct answers</th><th class="num">Correct refusals</th><th class="num">Citation precision</th></tr></thead><tbody>${
+    rows.map(([m, n]) => `<tr><td>${n}</td><td class="num">${pct(ql[m].answer_accuracy)}</td><td class="num">${pct(ql[m].refusal_accuracy)}</td><td class="num">${pct(ql[m].citation_precision, 1)}</td></tr>`).join("")}</tbody>`;
+  const bu = rt.none.leaks_by_user; const max = Math.max(...Object.values(bu));
+  $("#rt-users").innerHTML = Object.entries(bu).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([id, n]) => `
+    <div class="mrow"><div><div class="nm">${esc(users[id].name)}</div><div class="sub">${esc(users[id].title)}</div></div>
+    <div class="track"><i style="width:${n / max * 100}%"></i></div><div class="num">${n}</div></div>`).join("");
+  $("#rt-samples").innerHTML = rt.none.samples.slice(0, 6).map(s => `
+    <div class="sample"><div><span class="badge leak">as ${esc(first(s.user))}</span> <b>${esc(s.question)}</b></div>
+    <div class="ans">${esc(s.answer.replace(/\s*\[\d+\]/g, ""))}</div>
+    <div class="mono" style="color:var(--leak)">${esc(s.reason)}</div></div>`).join("");
+})();
+
+/* ---------------- Pilot ---------------- */
+(function () {
+  const p = DATA.pilot, a = p.assumptions;
+  $("#pl-stats").innerHTML = `
+    <div class="panel stat"><span class="v">${p.questions}</span><span class="k">questions in ${p.days} working days</span></div>
+    <div class="panel stat"><span class="v">${pct(p.answer_rate)}</span><span class="k">answered · ${pct(p.helpful_rate)} rated helpful</span></div>
+    <div class="panel stat"><span class="v">${p.minutes_saved_per_engineer_day} min</span><span class="k">saved per engineer per day</span></div>
+    <div class="panel stat"><span class="v">${p.baseline_first_response_min} min → s</span><span class="k">#eng-help wait vs assistant</span></div>
+    <div class="panel stat good"><span class="v">$${Math.round(p.projected_annual_value_usd / 1000)}K</span><span class="k">projected yearly value at rollout (${p.projected_annual_hours.toLocaleString()} hrs)</span></div>`;
+  const max = Math.max(...p.questions_per_day);
+  $("#pl-bars").innerHTML = p.questions_per_day.map((n, i) => `
+    <div><span class="b${i === p.questions_per_day.length - 1 ? " last" : ""}" style="height:${(n / max * 100).toFixed(0)}%"><span class="val">${n}</span></span><span class="lab">${i + 1}</span></div>`).join("");
+  const q = DATA.quality.prefilter, r = DATA.redteam.prefilter;
+  const gates = [
+    ["Permission leaks", "0", `${r.leaks} / ${r.cases}`, r.leaks === 0],
+    ["Correct, cited answers", "≥ 90%", pct(q.answer_accuracy), q.answer_accuracy >= 0.9],
+    ["Correct refusals", "≥ 95%", pct(q.refusal_accuracy), q.refusal_accuracy >= 0.95],
+    ["Citation precision", "≥ 90%", pct(q.citation_precision, 1), q.citation_precision >= 0.9],
+    ["Weekly active, final week", `${p.cohort_size}/${p.cohort_size}`, `${p.weekly_active_final_week}/${p.cohort_size}`, p.weekly_active_final_week === p.cohort_size],
+  ];
+  $("#pl-gates").innerHTML = gates.map(([n, t, v, okk]) => `
+    <div class="gate"><span>${n} <span class="target">target ${t}</span></span><span class="mono">${v}</span>
+    <span class="badge ${okk ? "safe" : "leak"}">${okk ? "Pass" : "Miss"}</span></div>`).join("");
+  const rows = [
+    ["Minutes saved per helpful answer (asker)", a.minutes_saved_asker],
+    ["Minutes saved per deflected question (responder)", a.minutes_saved_responder],
+    ["Share that would have gone to #eng-help", pct(a.share_that_would_hit_eng_help)],
+    ["Engineers at rollout", a.engineers_at_rollout],
+    ["Weekly active at rollout", pct(a.adoption_at_rollout)],
+    ["Loaded cost per engineering hour", "$" + a.loaded_cost_per_eng_hour],
+    ["Working days per year", a.working_days_per_year],
+  ];
+  $("#pl-assume").innerHTML = `<tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td></tr>`).join("")}</tbody>`;
+  $("#pl-gaps").innerHTML = `<thead><tr><th>Question</th><th>Asked by</th><th class="num">Times</th><th>Meaning</th></tr></thead><tbody>${
+    p.top_unanswered.map(t => `<tr><td>${esc(t.question)}</td><td>${esc(first(t.user))}</td><td class="num">${t.count}</td>
+    <td>${t.reason === "no_access" ? `<span class="badge safe">No access</span>` : `<span class="badge warn">Content gap</span>`}</td></tr>`).join("")}</tbody>`;
+})();
+
+/* ---------------- Access map ---------------- */
+(function () {
+  const cols = DATA.users.map(u => u.id);
+  let filter = "all";
+  const sources = ["all", "github", "slack", "linear", "notion"];
+  function draw() {
+    $("#ac-filters").innerHTML = sources.map(s => `<button class="chip" data-src="${s}" aria-pressed="${s === filter}">${s === "all" ? "All sources" : SRC[s]}</button>`).join("");
+    $("#ac-filters").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { filter = b.dataset.src; draw(); }));
+    const rows = DATA.matrix.filter(d => filter === "all" || d.source === filter);
+    $("#ac-matrix").innerHTML = `<thead><tr><th>Document</th>${cols.map(id => `<th class="u" title="${esc(users[id].title)}">${esc(users[id].name)}</th>`).join("")}</tr></thead><tbody>${
+      rows.map(d => {
+        const pub = d.readers.includes("public");
+        const restricted = !pub && d.readers.length < 6;
+        return `<tr class="${restricted ? "restricted" : ""}"><td class="doc"><div class="dt">${esc(d.title)}</div><div class="src-tag">${esc(SRC[d.source])} · ${esc(d.container)}</div></td>${
+          cols.map(id => `<td class="c">${pub || d.readers.includes(id) ? `<span class="yes" aria-label="can read"></span>` : `<span class="no" aria-label="no access"></span>`}</td>`).join("")}</tr>`;
+      }).join("")}</tbody>`;
+  }
+  draw();
+  const unmapped = DATA.sync.flatMap(s => s.unmapped.map(u => `${u} (${s.source})`));
+  const red = Object.values(DATA.redactions).flat();
+  $("#ac-sync").textContent = `Sync: ${DATA.sync.map(s => `${SRC[s.source]} ${s.documents}`).join(" · ")} · unmapped identities dropped: ${unmapped.join(", ") || "none"} · secrets redacted at ingest: ${red.join(", ") || "none"}`;
+})();
+
+/* ---------------- Engagement ---------------- */
+(function () {
+  const steps = [
+    ["Week 0", "Discovery", "Three calls: the VP Eng sponsor, the Ingest EM champion, and the Head of Security who can veto. They asked for \"ChatGPT for our docs\"; the real need was getting answers to new engineers without interrupting three staff engineers, and without a security incident.", "01-discovery.md"],
+    ["Week 0", "Solution design", "Architecture and the decisions behind it: filter by permission before retrieval, expand ACLs to explicit people at sync time, join identities on email, fail closed on stale permissions, read-only v1.", "02-solution-design.md"],
+    ["Week 1", "Security review", "The vendor questionnaire answered with least-privilege scopes per connector, a permission table with a test for every rule, and a threat model backed by red-team evidence.", "03-security-review.md"],
+    ["Week 1", "Statement of work", "User stories in Given/When/Then form and five acceptance criteria, each enforced in CI so the pilot can't drift from what was signed.", "04-sow-and-acceptance.md"],
+    ["Weeks 1–3", "Objection handling", "The hard questions from Security, the sponsor and People Ops, answered with evidence: leaks, existence leaks, hallucinations, offboarding, stale docs, cost.", "05-objection-handling.md"],
+    ["Week 3", "Pilot readout", "Results against every criterion, a value estimate with each assumption written down, refusals split into permissions-working vs content gaps, and a go recommendation with conditions.", "06-pilot-readout.md"],
+    ["Week 4", "Handoff", "A runbook for the customer's Platform team: daily checks, the release gate, common tasks, and who to call when something looks like a leak.", "07-handoff-runbook.md"],
+  ];
+  $("#eg-timeline").innerHTML = steps.map(([w, t, d, f]) => `
+    <div class="step"><span class="wk">${w}</span><div><h3>${t}</h3><p>${esc(d)}</p>
+    <a href="${REPO}/blob/main/docs/engagement/${f}" target="_blank" rel="noopener">Read ${f}</a></div></div>`).join("");
+})();
+
+/* initial tab */
+let initial = (location.hash || "").replace("#", "");
+if (!TABS.includes(initial)) { try { initial = localStorage.getItem("pk-tab") || "assistant"; } catch (e) { initial = "assistant"; } }
+showTab(initial);
+</script>

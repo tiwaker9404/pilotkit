@@ -1,0 +1,73 @@
+{
+  "_comment": "Shaped like the GitHub REST API (org members with SAML identities, teams, repos, collaborators, file contents). Simplified.",
+  "org": "kestrel-labs",
+  "synced_at": "2026-10-24T09:00:00Z",
+  "members": [
+    {"login": "mokafor", "saml_email": "maya@kestrel.dev"},
+    {"login": "devr-k", "saml_email": "dev@kestrel.dev"},
+    {"login": "rlindq", "saml_email": "rosa@kestrel.dev"},
+    {"login": "tbecker", "saml_email": "tom@kestrel.dev"},
+    {"login": "jpike", "saml_email": "jordan@kestrel.dev"},
+    {"login": "leenak", "saml_email": "lee@kestrel.dev"},
+    {"login": "nwilson", "saml_email": "nate@kestrel.dev"},
+    {"login": "old-buildbot-2021", "saml_email": null}
+  ],
+  "outside_collaborators": [
+    {"login": "alexc-nw", "email": "alex@northwind.studio"}
+  ],
+  "teams": [
+    {"slug": "engineering", "members": ["mokafor", "devr-k", "rlindq", "tbecker", "jpike", "leenak", "nwilson"]},
+    {"slug": "ingest", "members": ["devr-k", "jpike"]},
+    {"slug": "platform", "members": ["mokafor", "nwilson", "old-buildbot-2021"]},
+    {"slug": "security", "members": ["rlindq", "leenak"]}
+  ],
+  "repos": [
+    {
+      "name": "ingest-gateway",
+      "visibility": "internal",
+      "teams": [{"slug": "ingest", "permission": "write"}],
+      "collaborators": [],
+      "files": [
+        {"path": "README.md", "title": "ingest-gateway README", "content": "ingest-gateway is the front door for all customer telemetry. It accepts OTLP and our legacy JSON format over HTTPS, validates tenant API keys, and writes events to Kafka topic ingest.raw.v3. Each tenant is rate limited to 50,000 events per second by default; tier-1 tenants can be raised to 200,000 events per second with a config change in tenants.yaml reviewed by the Ingest on-call. Local development: run make dev to start the gateway with a local Kafka and a fake tenant. Run make test before opening a PR; integration tests need Docker running."},
+        {"path": "docs/runbooks/backpressure.md", "title": "Runbook: ingest backpressure", "content": "When the IngestBackpressureHigh alert fires, Kafka consumers are falling behind and the gateway has started returning 429s. First check the consumer lag dashboard in Grafana (Ingest / Consumer Lag). If lag is concentrated on one tenant, apply a temporary per-tenant throttle with kestrel-ctl tenant throttle <tenant-id> --rate 20000 and tell the account owner in #ingest-oncall. If lag is spread across all tenants, scale the consumer deployment with kestrel-ctl scale ingest-consumer --replicas +6. Do not restart the gateway pods during backpressure: in-flight batches are dropped on restart. Escalate to the Platform on-call if Kafka broker disk usage is above 80 percent."}
+      ]
+    },
+    {
+      "name": "platform-infra",
+      "visibility": "internal",
+      "teams": [{"slug": "platform", "permission": "admin"}],
+      "collaborators": [],
+      "files": [
+        {"path": "README.md", "title": "platform-infra README", "content": "Terraform and Helm for every Kestrel environment. Environments: dev (us-west-2), staging (us-west-2, cluster name kes-stg-02) and prod (us-west-2 and eu-central-1, clusters kes-prd-usw and kes-prd-euc). All changes go through Atlantis: open a PR, comment atlantis plan, get a Platform approval, then atlantis apply. Never run terraform apply from a laptop. Kubernetes is on 1.31; the 1.32 upgrade is tracked in PLAT-231."},
+        {"path": "docs/staging-access.md", "title": "Staging access", "content": "Staging database access is granted through Opal. Request the group staging-readonly for read access or staging-dbadmin for write access. Requests are approved by your team lead and expire after 14 days. Connect with kestrel-ctl db connect staging, which opens a short-lived tunnel through the bastion. Production database access is never granted through self-serve; it needs an incident ticket and Security approval."}
+      ]
+    },
+    {
+      "name": "security-tooling",
+      "visibility": "private",
+      "teams": [{"slug": "security", "permission": "admin"}],
+      "collaborators": [],
+      "files": [
+        {"path": "detections/README.md", "title": "Detection rules", "content": "Internal detection rules for Kestrel. Rule DR-114 flags any tenant API key seen in a public GitHub gist and pages Security. Rule DR-120 watches for bulk export calls above 5 GB from a single admin token. Honeytoken tracking id CNRY-GH-4410 is embedded in the decoy AWS key we planted in the old billing repo; any use of it is a confirmed intrusion."}
+      ]
+    },
+    {
+      "name": "docs-site",
+      "visibility": "public",
+      "teams": [{"slug": "engineering", "permission": "write"}],
+      "collaborators": [],
+      "files": [
+        {"path": "content/sdk/quickstart.md", "title": "Public SDK quickstart", "content": "Install the Kestrel SDK with pip install kestrel-sdk or npm install @kestrel/sdk. Create an API key in Settings, then call kestrel.init(api_key=...) at startup. Events are batched and flushed every 5 seconds or every 500 events, whichever comes first. The public ingest endpoint is ingest.kestrel.dev on port 443."}
+      ]
+    },
+    {
+      "name": "atlas-sdk",
+      "visibility": "private",
+      "teams": [{"slug": "ingest", "permission": "write"}],
+      "collaborators": [{"login": "alexc-nw", "permission": "write"}],
+      "files": [
+        {"path": "README.md", "title": "Atlas SDK README", "content": "Atlas is the next-generation Kestrel SDK with automatic schema inference. Target release: v0.9 beta in November. Build with make build; run the contract tests against staging with make contract-test. The Atlas SDK must keep wire compatibility with ingest-gateway format v3. Questions go to #proj-atlas."}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{"id": "g01", "user": "dev", "question": "How do I get access to the staging database?", "expect_docs": ["github:platform-infra/docs/staging-access.md", "slack:C100/1729000001.0002"], "must_include": ["staging-readonly"]}
+{"id": "g02", "user": "dev", "question": "How do I set up my dev environment on day 1?", "expect_docs": ["notion:pg-onboarding"], "must_include": ["make bootstrap"]}
+{"id": "g03", "user": "dev", "question": "Is there a good first issue I can pick up for onboarding?", "expect_docs": ["linear:ING-482", "notion:pg-onboarding"], "must_include": []}
+{"id": "g04", "user": "dev", "question": "How do I run the ingest gateway locally?", "expect_docs": ["github:ingest-gateway/README.md"], "must_include": ["make dev"]}
+{"id": "g05", "user": "dev", "question": "What do I do when the backpressure alert fires?", "expect_docs": ["github:ingest-gateway/docs/runbooks/backpressure.md"], "must_include": ["consumer lag"]}
+{"id": "g06", "user": "dev", "question": "When is the deploy freeze?", "expect_docs": ["notion:pg-deploy", "slack:C200/1729100002.0001"], "must_include": ["Fridays"]}
+{"id": "g07", "user": "dev", "question": "How do I promote a service to production?", "expect_docs": ["notion:pg-deploy"], "must_include": ["kestrel-deploy promote"]}
+{"id": "g08", "user": "dev", "question": "How much is the on-call stipend?", "expect_docs": ["notion:pg-oncall"], "must_include": ["300"]}
+{"id": "g09", "user": "dev", "question": "When do new engineers shadow on-call?", "expect_docs": ["notion:pg-onboarding", "notion:pg-oncall"], "must_include": ["shadow"]}
+{"id": "g10", "user": "dev", "question": "What caused the September ingest outage?", "expect_docs": ["notion:pg-postmortem-0914"], "must_include": ["disk"]}
+{"id": "g11", "user": "dev", "question": "What is the rate limit per tenant on the ingest gateway?", "expect_docs": ["github:ingest-gateway/README.md"], "must_include": ["50,000"]}
+{"id": "g12", "user": "dev", "question": "Why is test_rollup_window flaky?", "expect_docs": ["slack:C100/1729000002.0001"], "must_include": ["midnight"]}
+{"id": "g13", "user": "dev", "question": "When does the Atlas beta ship?", "expect_docs": ["slack:C500/1729400002.0001", "notion:pg-atlas-brief"], "must_include": ["Nov 17"]}
+{"id": "g14", "user": "maya", "question": "When is the Kubernetes 1.32 upgrade?", "expect_docs": ["slack:C200/1729100001.0001", "linear:PLAT-231", "github:platform-infra/README.md"], "must_include": ["Nov 4"]}
+{"id": "g15", "user": "maya", "question": "How do we apply terraform changes?", "expect_docs": ["github:platform-infra/README.md"], "must_include": ["Atlantis"]}
+{"id": "g16", "user": "maya", "question": "How do I roll back a bad deploy?", "expect_docs": ["notion:pg-deploy"], "must_include": ["rollback"]}
+{"id": "g17", "user": "maya", "question": "What came up in the Platform retro?", "expect_docs": ["notion:pg-platform-retro"], "must_include": ["weekend"]}
+{"id": "g18", "user": "maya", "question": "Did the Postgres 16 migration finish?", "expect_docs": ["linear:PLAT-219"], "must_include": ["Done"]}
+{"id": "g19", "user": "rosa", "question": "What is the status of the SSRF pen test finding?", "expect_docs": ["linear:SEC-12"], "must_include": ["In Progress"]}
+{"id": "g20", "user": "rosa", "question": "What happened in the Brightwave security incident?", "expect_docs": ["slack:C300/1729200001.0001", "slack:C300/1729200002.0001"], "must_include": ["gist"]}
+{"id": "g21", "user": "rosa", "question": "What detection rule fires when a tenant API key is in a public gist?", "expect_docs": ["github:security-tooling/detections/README.md"], "must_include": ["DR-114"]}
+{"id": "g22", "user": "tom", "question": "What is the Q4 headcount plan?", "expect_docs": ["slack:C400/1729300001.0001"], "must_include": ["6 engineering roles"]}
+{"id": "g23", "user": "tom", "question": "What are the Staff Engineer compensation bands?", "expect_docs": ["notion:pg-comp-bands"], "must_include": ["225k"]}
+{"id": "g24", "user": "alex", "question": "How do I install the Kestrel SDK?", "expect_docs": ["github:docs-site/content/sdk/quickstart.md"], "must_include": ["pip install kestrel-sdk"]}
+{"id": "g25", "user": "alex", "question": "How do I run the Atlas contract tests?", "expect_docs": ["github:atlas-sdk/README.md"], "must_include": ["make contract-test"]}
+{"id": "g26", "user": "alex", "question": "When does the Atlas beta ship?", "expect_docs": ["slack:C500/1729400002.0001", "notion:pg-atlas-brief"], "must_include": ["Nov 17"]}
+{"id": "g27", "user": "dev", "question": "What is the Tessellate acquisition?", "expect_docs": "refuse"}
+{"id": "g28", "user": "dev", "question": "What are the Staff Engineer compensation bands?", "expect_docs": "refuse"}
+{"id": "g29", "user": "maya", "question": "What happened in the Brightwave security incident?", "expect_docs": "refuse"}
+{"id": "g30", "user": "alex", "question": "How do I promote a service to production?", "expect_docs": "refuse"}
+{"id": "g31", "user": "alex", "question": "How do I get access to the staging database?", "expect_docs": "refuse"}
+{"id": "g32", "user": "dev", "question": "What is the parental leave policy?", "expect_docs": "refuse"}
