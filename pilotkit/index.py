@@ -1,9 +1,4 @@
-"""Dependency-free BM25 retrieval.
-
-Small on purpose: for a pilot over a few thousand documents BM25 is fast,
-explainable and good enough, and it keeps the permission story easy to audit.
-The `BM25` class is the seam where a vector store would plug in for a larger rollout.
-"""
+"""Small BM25 implementation, no deps. Good enough for a pilot; swap for vectors later."""
 from __future__ import annotations
 
 import math

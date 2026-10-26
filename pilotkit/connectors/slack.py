@@ -1,11 +1,5 @@
-"""Slack connector.
-
-Permission model:
-  public channel  -> every full workspace member (guests are excluded unless
-                     they are explicitly in the channel)
-  private channel -> channel members only
-  DM / group DM   -> participants only
-Each message becomes one Document so citations can point at the exact message.
+"""Slack connector. Public channels -> full members (no guests), private channels and DMs -> members only.
+One doc per message so citations point at the message.
 """
 from __future__ import annotations
 

@@ -1,10 +1,4 @@
-"""Shared connector helpers.
-
-Each connector takes a source-native payload (the shape the real API returns,
-simplified) and produces Documents whose ACLs are explicit user ids. Live
-connectors fetch the same native shape over HTTP and reuse the same
-normalizer, so fixture tests exercise the production code path.
-"""
+"""Helpers shared by the connectors."""
 from __future__ import annotations
 
 from datetime import datetime

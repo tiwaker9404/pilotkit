@@ -1,14 +1,9 @@
-"""The deployed assistant: permission filter -> retrieve -> guard -> answer -> redact -> audit.
+"""permission filter -> retrieve -> guard -> answer -> redact -> audit
 
-ACL modes (the core design decision, see docs/engagement/02-solution-design.md):
-  prefilter  (default) Build the search space from documents the user can
-             read, then retrieve. Leak-proof by construction; ranking
-             statistics also come only from permitted documents.
-  postfilter Retrieve top-k across everything, then drop what the user can't
-             read. Also leak-proof, but permitted answers get crowded out by
-             restricted ones, so answer quality drops.
-  none       No filtering. Exists only so the red-team suite can show what a
-             naive RAG deployment leaks. Never use it for real users.
+modes:
+  prefilter   only search docs the user can read (default)
+  postfilter  search everything, drop unreadable hits after
+  none        no filtering, only exists so the red team has a baseline
 """
 from __future__ import annotations
 

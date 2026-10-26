@@ -1,59 +1,49 @@
-# 01 · Discovery
+# Discovery notes: Kestrel Labs
 
-**Customer:** Kestrel Labs · **Calls:** 3 (sponsor, champion, security) · **Status:** qualified for a pilot
+Three calls, week 0.
 
-## Stakeholders
+## Call 1: Tom Becker (VP Eng, sponsor)
 
-| Person | Role in the deal | What they care about |
-|---|---|---|
-| Tom Becker, VP Engineering | Executive sponsor, signs off | New-hire ramp time, senior engineers' focus time |
-| Jordan Pike, EM Ingest | Champion, runs the pilot team | His two new hires are blocked on questions daily |
-| Lee Nakamura, Head of Security | Gatekeeper, can veto | "An AI that reads Slack" must never show anyone something they couldn't already see |
-| Priya Shah, People Ops | Informed | Exec and HR content must stay out of reach |
+- Asked for "ChatGPT for our docs"
+- Actual problem: new hires take ~9 working days to first merged PR, and three staff engineers answer most questions in #eng-help
+- Wants: faster ramp, fewer interruptions for seniors
+- Would like it to file tickets eventually. Told him read-only for the pilot.
 
-## What they said vs what they need
+## Call 2: Jordan Pike (EM, Ingest, champion)
 
-- **They said:** "We want ChatGPT for our docs."
-- **What's actually going on:** Kestrel's knowledge isn't in docs. It's spread across Slack threads, Linear issues, READMEs and a few Notion pages, and the people who know where things are are three staff engineers who get interrupted all day.
-- **The real need:** get answers to new and mid-level engineers *without* routing through those staff engineers, and without creating a security incident.
-- **The real risk:** permissions, not answer quality. Lee will block anything that can't prove it respects private channels, private repos and restricted pages.
+- Two new hires on his team, blocked on questions daily
+- Knowledge mostly isn't in docs. It's in Slack threads, Linear issues, READMEs, a few Notion pages
+- Shared 90 days of #eng-help stats:
+  - ~410 questions, 31% answered by the same 3 people
+  - median first response 38 min
+  - repeats: staging access, deploy freeze, on-call, local setup, runbooks
+- Happy to run the pilot with Ingest + a few people from Platform and Security
 
-## Current state (measured from 90 days of #eng-help, shared by Jordan)
+## Call 3: Lee Nakamura (Head of Security)
 
-```
-Engineer has a question
-  └─ searches Notion / GitHub / Slack            ~10 to 20 min, often fails
-      └─ posts in #eng-help or DMs a staff engineer
-          └─ waits                                median first response: 38 min
-              └─ staff engineer context-switches  ~5 min each, ~25 times a week
-                  └─ answer lives in a thread nobody will find next time
-```
+- Will block anything that can show someone content from a channel, repo or page they're not in. This is the real risk, more than answer quality.
+- Also wants: no confirming that restricted things exist, no secrets in answers, contractors limited to their project, audit trail
+- Okta is the IdP, GitHub uses SAML so logins map to corporate email
+- Needs to review model provider data terms before real data goes in. Pilot uses a staging copy.
+- One contractor team (Northwind Studio, Atlas SDK) has guest access to one Slack channel, one repo, one Notion page
 
-- ~410 questions in #eng-help in 90 days, 31% answered by the same three staff engineers
-- New hires' median time to first merged PR: 9 working days
-- Most repeated questions: staging access, deploy freeze rules, on-call, local setup, runbooks
+## How a question gets answered today
 
-## Future state
+1. search Notion/GitHub/Slack separately (10-20 min, often fails)
+2. post in #eng-help or DM a staff engineer
+3. wait (38 min median)
+4. staff engineer context switches (~25x a week)
+5. answer ends up in a thread nobody finds next time
 
-```
-Engineer asks the assistant (Slack or web)
-  └─ assistant searches only what that engineer can already read
-      └─ cited answer in seconds, or "I couldn't find anything you have access to"
-          └─ unanswered questions are reported weekly as documentation gaps
-```
+## Agreed success criteria (going into the SOW)
 
-## Success criteria (agreed with Tom and Jordan, written into the SOW)
+1. zero permission leaks on an adversarial suite Lee can review and rerun
+2. 90%+ of answerable questions answered correctly with the right citation
+3. 95%+ correct refusals
+4. whole pilot cohort weekly active by week 2
+5. a time-saved estimate Tom can take to finance, with assumptions written out
 
-1. **Zero permission leaks** across an adversarial test suite Security reviews. Non-negotiable; this is Lee's gate.
-2. **90%+ of answerable questions answered correctly with a citation** to the right source.
-3. **95%+ correct refusals** when the asker has no access or nothing exists.
-4. **Weekly active use by the full pilot cohort** by week 2.
-5. **A credible time-saved estimate** Tom can take to the CFO, with every assumption written down.
+## Open
 
-## Constraints and open questions
-
-- Read-only for v1. Tom wants actions (filing tickets) later; Lee doesn't, yet.
-- Contractors exist (Northwind Studio on the Atlas SDK) and must see only their project.
-- Identity is Okta. GitHub uses SAML, so logins map to corporate email.
-- Model provider data terms must be reviewed by Lee before any real data flows. The pilot runs on synthetic data plus a staging copy.
-- **Open:** does Slack Enterprise Grid data export require a separate admin approval? (Jordan to confirm.)
+- Does Slack Enterprise Grid export need separate admin approval? (Jordan checking)
+- DMs: off unless Kestrel asks

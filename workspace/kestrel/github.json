@@ -1,5 +1,4 @@
 {
-  "_comment": "Shaped like the GitHub REST API (org members with SAML identities, teams, repos, collaborators, file contents). Simplified.",
   "org": "kestrel-labs",
   "synced_at": "2026-10-24T09:00:00Z",
   "members": [

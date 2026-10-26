@@ -1,9 +1,4 @@
-"""Builds results.json and the static demo site.
-
-Every answer shown on the demo site is produced by the real pipeline at build
-time; the page itself does no retrieval. That keeps the site honest (what you
-see is what the code does) and lets it run on any static host.
-"""
+"""Build reports/results.json and the static demo site from a fresh run."""
 from __future__ import annotations
 
 import json
@@ -136,12 +131,9 @@ __BODY__
 
 
 def build_site(data: dict) -> Path:
-    """Writes site/fragment.html (body content, for hosts that supply the
-    document skeleton) and site/index.html (a complete page for GitHub Pages)."""
     template = (SITE / "template.html").read_text()
     payload = json.dumps(data).replace("</", "<\\/")
-    fragment = template.replace("/*__PILOTKIT_DATA__*/null", payload)
-    (SITE / "fragment.html").write_text(fragment)
+    body = template.replace("/*__PILOTKIT_DATA__*/null", payload)
     out = SITE / "index.html"
-    out.write_text(SKELETON.replace("__BODY__", fragment))
+    out.write_text(SKELETON.replace("__BODY__", body))
     return out

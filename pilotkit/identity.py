@@ -1,10 +1,4 @@
-"""Identity resolution.
-
-Every source names people differently (GitHub logins, Slack member ids, Linear
-and Notion user ids). The identity provider export is the source of truth, and
-everything is joined on email. A native id that can't be mapped to a known
-person is reported and dropped, never guessed: fail closed.
-"""
+"""Directory + identity resolution. Everything joins on email; ids we can't map get dropped."""
 from __future__ import annotations
 
 import json

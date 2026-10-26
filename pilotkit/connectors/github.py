@@ -1,9 +1,8 @@
 """GitHub connector.
 
-Permission model (what a person can read on GitHub, translated to ACLs):
-  public repo    -> everyone, including contractors
-  internal repo  -> every org member (outside collaborators excluded) + collaborators
-  private repo   -> members of teams granted on the repo + direct collaborators
+public repo   -> everyone
+internal repo -> org members (not outside collaborators) + collaborators
+private repo  -> granted teams + direct collaborators
 """
 from __future__ import annotations
 
@@ -97,12 +96,8 @@ class GitHubClient:
 
 
 def fetch_native(org: str, token: str, identity_emails: dict[str, str], max_repos: int = 50) -> dict:
-    """Build the native payload from the live API.
-
-    `identity_emails` maps GitHub login -> corporate email. Real deployments get
-    this from the org's SAML/SCIM identities; GitHub does not expose it on the
-    REST user object, so we take it as an input rather than guessing.
-    """
+    # GitHub doesn't return corporate emails on the REST user object, so the
+    # login -> email map comes in as a CSV instead of guessing.
     from datetime import datetime, timezone
 
     gh = GitHubClient(token)

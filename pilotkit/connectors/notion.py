@@ -1,9 +1,4 @@
-"""Notion connector.
-
-Permission model:
-  workspace page  -> every workspace member (guests excluded)
-  restricted page -> the groups and people it is explicitly shared with
-"""
+"""Notion connector. Workspace pages -> members (no guests), restricted pages -> whoever they're shared with."""
 from __future__ import annotations
 
 from ..identity import Directory

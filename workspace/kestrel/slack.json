@@ -1,5 +1,4 @@
 {
-  "_comment": "Shaped like the Slack Web API (users.list, conversations.list, conversations.members, conversations.history). Simplified.",
   "workspace": "kestrel-labs",
   "synced_at": "2026-10-24T09:00:00Z",
   "users": [

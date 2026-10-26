@@ -1,5 +1,4 @@
 {
-  "_comment": "Kestrel Labs identity provider export (Okta-style). Source of truth for who a person is. Every connector maps its native user ids back to these emails.",
   "company": {
     "name": "Kestrel Labs",
     "description": "Observability platform for data pipelines. ~180 employees, ~60 engineers, Series C.",

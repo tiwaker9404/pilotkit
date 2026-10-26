@@ -1,10 +1,4 @@
-"""Linear connector.
-
-Permission model:
-  issue in a public team  -> every workspace member
-  issue in a private team -> team members only
-Contractors who are not Linear members never see issues.
-"""
+"""Linear connector. Public team -> all workspace members, private team -> team members."""
 from __future__ import annotations
 
 from ..identity import Directory

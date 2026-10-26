@@ -1,4 +1,4 @@
-"""PII and secret redaction, applied at ingest and again on every answer."""
+"""Redact secrets and PII. Runs at ingest and again on answers."""
 from __future__ import annotations
 
 import re
@@ -18,12 +18,7 @@ EMAIL = re.compile(r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b")
 
 
 def redact(text: str, internal_domains: tuple[str, ...] = ("kestrel.dev",)) -> tuple[str, list[str]]:
-    """Return redacted text and the list of redaction kinds applied.
-
-    Employee emails on internal domains are kept (they're useful and already
-    visible in the directory). External emails, e.g. customer contacts, are
-    redacted because the pilot's DPA does not cover customer PII.
-    """
+    # keep internal emails, redact external ones (customer contacts aren't covered by the DPA)
     hits: list[str] = []
     for kind, pattern in PATTERNS:
         text, n = pattern.subn(f"[REDACTED:{kind}]", text)

@@ -1,106 +1,81 @@
 # pilotkit
 
-**Taking an AI assistant from discovery to measurable value at a customer, without a single permission leak.**
+A permission-aware Q&A assistant for engineering teams, built as a mock customer pilot.
 
-pilotkit is a complete, simulated customer engagement. A fictional 180-person company, Kestrel Labs, wants an assistant that answers engineering questions from their GitHub, Slack, Linear and Notion. Their Head of Security will veto anything that could show someone a channel they're not in.
+The setup: Kestrel Labs (made up, ~180 people) wants an assistant that answers engineering questions from GitHub, Slack, Linear and Notion. Their head of security will block it unless it can prove nobody sees anything they couldn't already open. I treated it like a real engagement, so alongside the code there are discovery notes, a design doc, a security review, an SOW, a pilot readout and a handoff runbook in [`docs/engagement`](docs/engagement).
 
-This repo is everything I'd deliver as the deployment engineer: the discovery notes, the solution design, the security review, the SOW with acceptance criteria, the working system, a 284-case permission red team, a two-week pilot readout with a value estimate, and the handoff runbook.
-
-**[Live demo →](https://tiwaker9404.github.io/pilotkit/)** Switch between five employees, ask the same question, and watch the answers change. Then turn permission enforcement off to see what a naive deployment would have told them.
+Demo: https://tiwaker9404.github.io/pilotkit/ (switch between employees, ask the same question, then turn permission filtering off and see what leaks)
 
 ## Results
 
-| | Naive RAG | Filter after retrieval | **pilotkit (filter first)** |
-|---|---|---|---|
-| Permission leaks (284 adversarial tests) | 201 (71%) | 0 | **0** |
-| Correct, cited answers | 96% | 100% | **100%** |
-| Correct refusals | 17% | 83% | **100%** |
+I wrote 284 adversarial questions: every user aimed at every doc they can't read, plus a few generic jailbreaks. Restricted docs have planted strings in them so leaks are detected automatically.
 
-**Pilot (8 people, 10 working days):** 158 questions · 95% answered · 90% rated helpful · ~17 min saved per engineer per day · **~$256K/yr projected at rollout** with every assumption written down.
-
-## Try it in 30 seconds
-
-No dependencies, no API key. Python 3.10+.
-
-```bash
-git clone https://github.com/tiwaker9404/pilotkit && cd pilotkit
-
-# Same question, three people
-python -m pilotkit ask --as rosa "What happened in the Brightwave security incident?"   # security engineer: answered
-python -m pilotkit ask --as dev  "What happened in the Brightwave security incident?"   # new hire: refused
-python -m pilotkit ask --as alex "When does the Atlas beta ship?"                        # contractor: only his project
-
-make redteam   # 284 attacks across three permission strategies
-make pilot     # the pilot readout
-make gate      # everything CI enforces; fails on a single leak
+```
+                         leaks      correct answers   correct refusals
+no filtering            201/284          96%               17%
+filter after search       0/284         100%               83%
+filter before search      0/284         100%              100%   <- default
 ```
 
-Set `ANTHROPIC_API_KEY` to answer with Claude instead of the offline answerer. Retrieval, permissions and the red team are identical either way.
+Filtering after search stops content leaks, but ranking still uses docs the user can't see, so it sometimes answered a question about a private incident with an unrelated doc. Filtering first avoids that.
+
+Pilot replay (8 people, 10 days): 158 questions, 95% answered, ~17 min/day saved per engineer, ~$256K/yr projected at rollout. Usage volume is simulated, the answers aren't. Assumptions are in [06-pilot-readout.md](docs/engagement/06-pilot-readout.md).
+
+## Running it
+
+Python 3.10+, no dependencies, no API key needed.
+
+```bash
+python -m pilotkit ask --as rosa "What happened in the Brightwave security incident?"   # security eng, gets an answer
+python -m pilotkit ask --as dev  "What happened in the Brightwave security incident?"   # new hire, refused
+python -m pilotkit ask --as alex "When does the Atlas beta ship?"                        # contractor
+
+make redteam   # the 284 attacks, all three modes
+make eval      # golden-set quality
+make pilot     # pilot readout
+make gate      # what CI runs, fails on any leak
+```
+
+With `ANTHROPIC_API_KEY` set it answers with Claude instead of the offline sentence-picker. Retrieval and permissions don't change.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    S[GitHub · Slack · Linear · Notion] --> C[Connectors<br/>native permissions → explicit user lists]
-    D[(Okta directory)] --> C
-    C --> R[Redact secrets + PII] --> F{ACLs fresh?}
-    F -- no --> X[Excluded, fail closed]
-    F -- yes --> I[(Documents + ACLs)]
-    Q[Question] --> P[Prefilter: only what this user can open]
-    I --> P --> B[BM25] --> G[Injection guard] --> A[Answer with citations] --> L[(Audit log, ids only)]
+    S[GitHub / Slack / Linear / Notion] --> C[connectors: native perms -> user lists]
+    D[(directory)] --> C
+    C --> R[redact] --> F{ACLs fresh?}
+    F -- no --> X[dropped]
+    F -- yes --> I[(docs + ACLs)]
+    Q[question] --> P[keep only docs this user can read]
+    I --> P --> B[BM25] --> G[injection check] --> A[answer + citations] --> L[(audit log)]
 ```
 
-The decisions that matter, each covered in [the solution design](docs/engagement/02-solution-design.md):
+Some things I cared about:
 
-- **Permissions are applied before retrieval.** The model never sees content the asker can't open, so it can't leak it. Filtering after retrieval stops content leaks too, but ranking still depends on restricted documents.
-- **Each source's rules are translated faithfully.** GitHub internal vs private repos and outside collaborators, Slack guests and private channels, Linear private teams, Notion restricted pages and guests. [One test per rule](tests/test_permissions.py).
-- **Identity joins on email and fails closed.** A GitHub login with no directory match is dropped and reported, never guessed.
-- **Stale permissions fail closed.** If a source hasn't synced within 24 hours, its documents leave search.
-- **Refusals can't confirm existence.** "Is Kestrel acquiring Tessellate?" and "…acquiring Zanzibar?" get identical replies from someone without access.
-- **Defense in depth.** A planted prompt injection in Slack is quarantined and logged. Secrets pasted into Slack are redacted at ingest and on output.
+- Each source's permission rules are mapped properly: GitHub internal vs private repos and outside collaborators, Slack guests and private channels, Linear private teams, Notion restricted pages and guests. There's a test per rule in `tests/test_permissions.py`.
+- Identities join on email via the company directory. If a login doesn't match anyone (there's an old build bot in the fixtures), it's dropped and reported.
+- If a source hasn't synced permissions in 24h its docs drop out of search.
+- A refusal looks the same whether the thing is restricted or doesn't exist, so you can't use it to confirm a rumor.
+- There's a planted prompt injection in #eng-help and a leaked AWS key in another message. The first gets quarantined, the second redacted.
 
-## The engagement
-
-| | Written for | |
-|---|---|---|
-| [Discovery](docs/engagement/01-discovery.md) | Sponsor and champion | Stakeholders, current-state workflow, what they said vs what they need, success criteria |
-| [Solution design](docs/engagement/02-solution-design.md) | Engineering | Architecture and trade-offs |
-| [Security review](docs/engagement/03-security-review.md) | Head of Security | Scopes, permission model, threat model, red-team method |
-| [SOW and acceptance](docs/engagement/04-sow-and-acceptance.md) | Sponsor | User stories, acceptance criteria enforced in CI, timeline, RACI |
-| [Objection handling](docs/engagement/05-objection-handling.md) | Everyone | The hard questions, answered with evidence |
-| [Pilot readout](docs/engagement/06-pilot-readout.md) | Sponsor | Results, value estimate, content gaps, go recommendation |
-| [Handoff runbook](docs/engagement/07-handoff-runbook.md) | Customer's Platform team | Operating it after I leave |
-
-## Repo map
+## Layout
 
 ```
-pilotkit/
-  connectors/       github (fixtures + live REST API), slack, linear, notion
-  identity.py       directory and email-based identity resolution
-  workspace.py      ingest: normalize → redact → freshness check
-  assistant.py      prefilter / postfilter / none, guard, audit log
-  answer.py         offline extractive answerer and Claude answerer
-  evals.py          red team, golden-set quality eval, pilot replay
-workspace/kestrel/  the fictional customer's data, shaped like each API
-evals/              canaries + attacks, golden questions
-docs/engagement/    the customer-facing documents
-site/               the interactive demo (built from a fresh run)
+pilotkit/connectors/   github (fixtures + live API), slack, linear, notion
+pilotkit/assistant.py  filter modes, injection guard, audit log
+pilotkit/answer.py     offline answerer + Claude answerer
+pilotkit/evals.py      red team, quality eval, pilot replay
+workspace/kestrel/     fake company data, shaped like each API's responses
+evals/                 canaries/attacks + golden questions
+docs/engagement/       discovery through handoff
+site/                  demo page (built by CI)
 ```
 
-## Connecting real data
+The GitHub connector works against a real org (`pilotkit github-sync --org <org> --identity-map logins.csv` with a read-only `GITHUB_TOKEN`). Slack, Linear and Notion run on fixtures for now.
 
-The GitHub connector works against a real org:
+## Not production-ready
 
-```bash
-export GITHUB_TOKEN=...   # fine-grained, read-only: metadata, contents, members
-python -m pilotkit github-sync --org your-org --identity-map logins.csv   # columns: login,email
-```
+This is pilot-grade. Missing for a real deployment: SSO (the CLI trusts `--as`), live Slack/Linear/Notion fetching, a persistent incremental index, a Slack bot or web UI, proper monitoring, and a much bigger golden set. The 100% scores are on 32 questions I wrote over 35 docs, so expect them to drop on real data.
 
-Slack, Linear and Notion run on API-shaped fixtures; their normalizers are the same code a live fetch would feed.
-
-## What's real and what's simulated
-
-**Simulated:** the customer, its people and documents, and pilot usage volume and feedback (seeded).
-**Real:** the permission model, connectors, retrieval, guardrails, red team, evals, and every answer and metric shown here and on the demo site.
-
-MIT licensed.
+MIT

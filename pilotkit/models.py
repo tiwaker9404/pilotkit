@@ -1,4 +1,4 @@
-"""Core data types shared by connectors, retrieval and the assistant."""
+"""Core data types."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,13 +9,7 @@ PUBLIC = "public"  # principal granted to everyone, including contractors
 
 @dataclass(frozen=True)
 class Document:
-    """One piece of retrievable content plus the people allowed to read it.
-
-    `acl` holds user ids (from the identity provider) or the PUBLIC principal.
-    Connectors expand source-native groups (GitHub teams, Slack channel
-    membership, Notion groups) into explicit user ids at sync time, so the
-    retrieval layer only ever does a set intersection.
-    """
+    # acl = user ids (or PUBLIC). connectors expand teams/channels/groups at sync time
 
     id: str
     source: str            # github | slack | linear | notion

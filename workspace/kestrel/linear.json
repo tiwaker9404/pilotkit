@@ -1,5 +1,4 @@
 {
-  "_comment": "Shaped like the Linear GraphQL API (users, teams with privacy and members, issues). Simplified.",
   "synced_at": "2026-10-24T09:00:00Z",
   "users": [
     {"id": "lin-maya", "email": "maya@kestrel.dev"},

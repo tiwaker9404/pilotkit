@@ -4,3 +4,5 @@ __pycache__/
 reports/
 github.live.json
 .env
+site/index.html
+site/fragment.html

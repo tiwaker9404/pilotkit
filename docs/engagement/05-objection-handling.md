@@ -1,30 +1,30 @@
-# 05 · Objection handling
+# Objections from the eval
 
-Questions raised during the evaluation, with the answer given and the evidence behind it.
+Questions that came up during the pilot and what I answered.
 
-**"Will it show people Slack channels they're not in?"** · *Lee, Security*
-No. Permissions are applied before the search runs, so the model never sees content the asker can't open. We tested every user against every document they can't read: 284 adversarial questions, zero leaks. The same suite against an unfiltered setup leaked 201 times, which is the proof the tests actually bite. Security can rerun it any time with `make redteam`.
+**Lee: "Will it show people Slack channels they're not in?"**
+No. Permissions are applied before search, so the model never sees anything the user can't open. 284 targeted attacks, 0 leaks. The same suite with filtering off leaks 201 times, so the tests do catch real leaks. Lee can rerun it with `make redteam`.
 
-**"Can it at least confirm that something exists? That's a leak too."** · *Lee*
-It can't. A user without access gets the same reply whether the topic is restricted or doesn't exist at all ("Is Kestrel acquiring Tessellate?" and "Is Kestrel acquiring Zanzibar?" return identical text). The decision to refuse uses only documents the asker can read, so it can't become a side channel.
+**Lee: "Can it at least confirm something exists? That's a leak too."**
+No. "Is Kestrel acquiring Tessellate?" and "Is Kestrel acquiring Zanzibar?" get the same reply from someone without access. The refusal check only uses docs the asker can read.
 
-**"What about hallucinations?"** · *Tom, VP Eng*
-Every answer cites its sources, and the assistant refuses rather than guesses when nothing relevant is readable. Golden-set results: 100% of answerable questions correct with the right citation, 100% correct refusals. Wrong answers are a bigger risk to adoption than missing ones, so the system is tuned to refuse when unsure.
+**Tom: "What about hallucinations?"**
+Every answer cites sources, and it refuses instead of guessing when nothing readable matches. 100% correct on the golden set, but that's 32 questions, so we grow it during rollout.
 
-**"Someone pasted an AWS key in Slack last month. Does that end up in answers?"** · *Lee*
-No. Secrets and external emails are redacted when content is ingested and again on output. That exact message is in the pilot data, and the key never reaches the index.
+**Lee: "Someone pasted an AWS key in Slack last month."**
+That exact message is in the pilot data. The key is redacted at ingest and never reaches the index.
 
-**"What happens when someone leaves or changes teams?"** · *Priya, People Ops*
-Access follows Okta and each source's own membership on every sync. If a source's permissions haven't synced within 24 hours, its documents drop out of search until they do.
+**Priya: "What happens when someone leaves or changes teams?"**
+Access follows Okta and source membership on every sync. If a source hasn't synced in 24h, its docs drop out until it does.
 
-**"Our docs are outdated. Won't it just repeat stale information?"** · *Jordan, EM*
-It can, which is why every answer cites its source so people can check it. The weekly readout also lists unanswered questions split into "asker has no access" (working as intended) and "nothing exists" (write a doc). In the pilot, the parental leave policy came up as a genuine content gap for People Ops.
+**Jordan: "Our docs are out of date."**
+It can repeat stale info, which is why every answer links its source. The weekly unanswered list also shows where docs are missing. The parental leave policy came up as an actual gap.
 
-**"Can it file tickets or reply in threads?"** · *Tom*
-Not in the pilot, by design. Write access needs new scopes and a separate security review. It's the first item in the phase 2 proposal, gated on the pilot's results.
+**Tom: "Can it file tickets?"**
+Not in the pilot. Needs write scopes and another security review. First thing in phase 2.
 
-**"How is this different from search we already have?"** · *Jordan*
-Slack search, GitHub search and Notion search each cover one silo and return links, not answers. The most common questions in #eng-help need information from two or three of them (for example, staging access lives in a README, a Slack thread and an Opal group name).
+**Jordan: "How is this different from Slack/Notion search?"**
+Those each search one tool and return links. Most #eng-help questions need two or three tools. Staging access, for example, is in a README, a Slack thread and an Opal group name.
 
-**"What does it cost to run?"** · *Tom*
-Retrieval runs on commodity compute. The main variable cost is model calls per question, which scale with usage and can be capped per user. The pilot readout's time-saved estimate is set against that cost in the rollout proposal.
+**Tom: "What does it cost?"**
+Retrieval is cheap. The main cost is model calls per question, which can be capped per user. I put the number next to the time-saved estimate in the rollout proposal.

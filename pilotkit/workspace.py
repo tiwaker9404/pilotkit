@@ -1,8 +1,4 @@
-"""Loads a customer workspace: directory + every connected source.
-
-Ingest pipeline: native payload -> normalize (ACLs as user ids) -> redact
-secrets/PII -> freshness check on permissions -> ready for retrieval.
-"""
+"""Load a customer workspace: directory + each source, then redact and drop docs with stale ACLs."""
 from __future__ import annotations
 
 import json

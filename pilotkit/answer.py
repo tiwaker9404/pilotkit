@@ -1,13 +1,8 @@
-"""Answer generation.
+"""Answerers.
 
-Two interchangeable answerers:
-  ExtractiveAnswerer - offline, deterministic, no API key. Picks the most
-                       relevant sentences from permitted sources and cites them.
-  ClaudeAnswerer     - uses the Anthropic Messages API when ANTHROPIC_API_KEY
-                       is set. Same inputs, same citation contract.
-
-Both only ever see documents the asking user is allowed to read; the answerer
-is not trusted to enforce permissions.
+ExtractiveAnswerer runs offline with no API key. ClaudeAnswerer is used when
+ANTHROPIC_API_KEY is set. Neither one is trusted with permissions; they only
+ever get docs the user can already read.
 """
 from __future__ import annotations
 
@@ -52,14 +47,8 @@ def split_sentences(text: str) -> list[str]:
 
 
 class ExtractiveAnswerer:
-    """Offline answerer.
-
-    Scores sentences by the IDF-weighted share of question terms they contain.
-    Weighting by IDF matters for refusals: if the rarest, most specific word in
-    the question ("Tessellate") appears nowhere the user can read, coverage
-    stays low and the assistant says it doesn't know instead of answering a
-    different question with confidence.
-    """
+    # Picks sentences by IDF-weighted overlap with the question. IDF weighting is what
+    # makes it refuse when the specific word ("Tessellate") isn't in anything the user can read.
 
     name = "extractive"
 

@@ -1,8 +1,4 @@
-"""Red-team, quality and pilot evaluations.
-
-These are the acceptance tests from the SOW (docs/engagement/04-sow-and-acceptance.md).
-CI runs them on every change and fails the build if a gate is missed.
-"""
+"""Red team, golden-set quality eval and the pilot replay. CI runs these with --gate."""
 from __future__ import annotations
 
 import json
@@ -198,13 +194,7 @@ PILOT_QUESTIONS = {
 
 
 def run_pilot(ws: Workspace, seed: int = 7) -> dict:
-    """Replays a two-week pilot through the real assistant.
-
-    Usage volume and thumbs-up feedback are simulated (seeded). Every answer,
-    refusal and latency comes from the actual pipeline. Questions with a
-    golden label are judged against it; unlabeled answered questions get a
-    simulated thumbs-up at the rate in BASELINE.
-    """
+    # usage + thumbs up are simulated (seeded); answers/refusals/latency are real
     rng = random.Random(seed)
     b = BASELINE
     golden = {(g["user"], g["question"]): g for g in load_golden()}

@@ -1,52 +1,40 @@
-# 06 · Pilot readout
+# Pilot readout
 
-**Audience:** Tom Becker (sponsor), Jordan Pike (champion), Lee Nakamura (security)
-**Recommendation:** **Go.** Roll out to all of engineering in phase 2, keeping the CI permission gate as a release blocker.
+For Tom, Jordan and Lee.
 
-## Results against the acceptance criteria
+Recommendation: roll out to all of engineering, and keep the red-team gate as a release blocker.
 
-| Criterion | Target | Result | |
-|---|---|---|---|
-| Permission leaks (284 adversarial tests) | 0 | **0** | ✅ |
-| Correct, cited answers | ≥ 90% | **100%** | ✅ |
-| Correct refusals | ≥ 95% | **100%** | ✅ |
-| Citation precision | ≥ 90% | **96.8%** | ✅ |
-| Cohort weekly active, final week | 8/8 | **8/8** | ✅ |
+## Against the acceptance criteria
+
+All five met: 0/284 leaks, 100% correct cited answers, 100% correct refusals, 96.8% citation precision, 8/8 weekly active.
 
 ## Usage (8 people, 10 working days)
 
-- **158 questions**, ramping from 13 on day 1 to 22 on day 10
-- **95% answered**, and **90% of answers rated helpful**
-- **Seconds to an answer** vs a **38-minute** median first response in #eng-help
-- **~17 minutes saved per engineer per day**, **22.5 hours** across the pilot
-- **~54 questions** that would otherwise have landed in #eng-help
+- 158 questions, 13 on day 1, 22 on day 10
+- 95% answered, 90% of those rated helpful
+- answers in seconds vs 38 min median wait in #eng-help
+- ~17 min saved per engineer per day, 22.5 hours total
+- ~54 of those questions would otherwise have gone to #eng-help
 
-## Projected value at rollout
+## Value at rollout
 
-**~2,330 engineering hours a year, roughly $256K**, under deliberately conservative assumptions:
+Roughly 2,330 engineering hours a year, ~$256K. I kept the assumptions conservative:
 
-| Assumption | Value | Source |
-|---|---|---|
-| Minutes saved per helpful answer (asker) | 8 | Discovery interviews |
-| Minutes saved per deflected question (responder) | 5 | Discovery interviews |
-| Share of questions that would have hit #eng-help | 40% | #eng-help history vs pilot volume |
-| Engineers at rollout | 60 | Kestrel headcount |
-| Weekly active at rollout | 60% | Conservative vs 100% in pilot |
-| Loaded cost per engineering hour | $110 | Kestrel finance |
-| Working days per year | 230 | |
+- 8 min saved for the asker per helpful answer
+- 5 min saved for whoever would have answered, but only for the 40% that would have hit #eng-help
+- 60 engineers, 60% weekly active (pilot was 100%)
+- $110/hr loaded cost, 230 working days
 
-## What the refusals tell us
+## Refusals
 
-| Question | Asked by | Count | Meaning |
-|---|---|---|---|
-| How do I get access to the staging database? | Alex (contractor) | 5 | **Working as intended.** Contractors aren't in the staging docs. |
-| What is the parental leave policy? | Dev | 3 | **Content gap.** No such page exists. Flagged to People Ops. |
+- Alex (contractor) asked about staging DB access 5 times. Correct, contractors don't have those docs.
+- Dev asked about parental leave 3 times. No page exists, so this is a content gap. Sent to People Ops.
 
-## Risks and conditions for rollout
+## Before rollout
 
-1. **Model data terms:** Lee signs off on the model provider's retention terms before real data flows.
-2. **DMs stay off** unless Kestrel decides otherwise.
-3. **Golden set grows with rollout:** each new team contributes 10 questions, so the quality gate keeps covering what people actually ask.
-4. **Phase 2 actions** (filing Linear tickets) get their own security review.
+1. Lee signs off on model provider data terms
+2. DMs stay off
+3. Each new team adds ~10 golden questions so the quality check covers what people actually ask
+4. Ticket filing (phase 2) gets its own security review
 
-*Usage volume and thumbs-up feedback are simulated (seeded) for this case study. Every answer, refusal and metric comes from running the real pipeline: `make pilot`.*
+Usage volume and thumbs-up rates in this readout are simulated with a fixed seed. Answers, refusals and latency come from running the pipeline (`make pilot`).

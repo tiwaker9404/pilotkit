@@ -1,76 +1,55 @@
-# 02 · Solution design
-
-## Architecture
+# Solution design
 
 ```mermaid
 flowchart LR
-    subgraph Sources["Kestrel's systems"]
-        GH[GitHub<br/>repos, teams, collaborators]
-        SL[Slack<br/>channels, members, guests]
-        LI[Linear<br/>teams, private teams]
-        NO[Notion<br/>pages, sharing, groups]
-    end
-    IDP[(Okta directory<br/>source of truth for identity)]
-
-    GH & SL & LI & NO --> NORM[Connectors<br/>native permissions → explicit user ACLs]
-    IDP --> NORM
-    NORM --> RED[Redact secrets + PII<br/>at ingest]
-    RED --> FRESH{ACLs synced<br/>within 24h?}
-    FRESH -- no --> DROP[Excluded<br/>fail closed]
-    FRESH -- yes --> STORE[(Documents + ACLs)]
-
-    Q[Question from user] --> FILTER[Permission prefilter<br/>only docs this user can read]
-    STORE --> FILTER
-    FILTER --> RET[BM25 retrieval]
-    RET --> GUARD[Injection guard<br/>quarantine instruction-like chunks]
-    GUARD --> ANS[Answerer<br/>Claude or offline extractive]
-    ANS --> OUT[Redact again → cited answer]
-    OUT --> AUDIT[(Audit log<br/>ids only, no content)]
+    GH[GitHub] & SL[Slack] & LI[Linear] & NO[Notion] --> NORM[connectors]
+    IDP[(Okta export)] --> NORM
+    NORM --> RED[redact secrets/PII]
+    RED --> FRESH{ACLs synced in last 24h?}
+    FRESH -- no --> DROP[excluded]
+    FRESH -- yes --> STORE[(docs + ACLs)]
+    Q[question] --> FILTER[only docs this user can read]
+    STORE --> FILTER --> RET[BM25] --> GUARD[injection check] --> ANS[answer] --> OUT[redact again] --> AUDIT[(audit log)]
 ```
 
-## Key decisions
+## Filter before search
 
-### 1. Filter by permission before retrieval, not after
+This was the main decision. I tried three options against the same red-team suite:
 
-| Option | Leaks (284 attacks) | Correct refusals | Notes |
-|---|---|---|---|
-| No filtering (naive RAG) | **201 (71%)** | 17% | What many prototypes ship |
-| Retrieve, then filter | 0 | 83% | Safe content-wise, but ranking statistics come from documents the user can't see. It answered a question about a private incident with an unrelated doc, and whether it refuses can depend on restricted content. |
-| **Filter, then retrieve (chosen)** | **0** | **100%** | Search space is built only from what the user can read. Leak-proof by construction. |
+- No filtering: 201 of 284 attacks leaked. This is what a lot of RAG prototypes do.
+- Search everything, then drop docs the user can't read: 0 leaks, but ranking is still computed over restricted docs. It answered a question about a private incident using an unrelated doc, and whether it refused could depend on restricted content.
+- Build the search space from only the user's readable docs, then search: 0 leaks, 100% correct refusals. Went with this.
 
-The model is never trusted to enforce permissions. By the time it sees anything, the restricted content is already gone.
+The model never gets restricted content, so it can't leak it no matter what the prompt says.
 
-### 2. Expand permissions to explicit user lists at sync time
+## Permissions as plain user lists
 
-GitHub teams, Slack channel membership, Linear teams and Notion groups are all different concepts. Each connector translates its source's rules into a flat set of user ids. Retrieval then does one set intersection, and Security can audit exactly who can see any document (see the access matrix on the demo site).
+Each source has its own model (GitHub teams/collaborators, Slack membership/guests, Linear private teams, Notion sharing). Every connector flattens its source's rules into a set of user ids at sync time. Search then just checks set membership, and Security can see exactly who can read any doc.
 
-### 3. Join identities on email, and drop anything that doesn't match
+## Identity
 
-Every source uses its own ids. The Okta export is the source of truth, and everything joins on email. An id that doesn't match a person (the sync found `old-buildbot-2021`) is reported and excluded, never guessed.
+Everything joins on email from the Okta export. If a source id doesn't map to a person, it gets dropped and shows up in the sync report. No guessing.
 
-### 4. Fail closed on stale permissions
+## Stale permissions
 
-If a source hasn't re-synced its ACLs within 24 hours, its documents drop out of search. Someone removed from a private channel this morning shouldn't keep seeing it through the assistant until the next sync.
+If a source hasn't re-synced ACLs in 24h, its docs are excluded until it does. Otherwise someone removed from a channel this morning keeps seeing it until the next sync. 24h is fine for a pilot but too long for production.
 
-### 5. Defense in depth for prompt injection
+## Prompt injection
 
-A message in #eng-help tries to instruct the assistant to dump #exec-staff. The guard quarantines it and logs a security event. Even if an injection got through, the prefilter means it could only reach what the asker can already read.
+There's a message in #eng-help telling "AI assistants" to dump #exec-staff. Chunks that look like instructions get quarantined and logged. It's regex-based, so it's a second layer and not the real protection. The real protection is that even a successful injection can only see what the asker can already read.
 
-### 6. Redact twice
+## Redaction
 
-Secrets and customer PII are redacted at ingest (an AWS key and a customer email were pasted into a public channel) and again on every answer.
+Secrets and external emails are redacted at ingest and again on output. The fixtures include an AWS key and a customer email pasted into a public channel.
 
-### 7. BM25 before vectors
+## BM25
 
-For a pilot over thousands of documents, BM25 is fast, explainable, and dependency-free. The `BM25` class is the seam where a vector store plugs in at rollout scale. The permission prefilter works the same way with either.
+Fast, no dependencies, easy to explain, and fine at pilot scale. The `BM25` class is where a vector store would go later. The prefilter works the same either way.
 
-### 8. Read-only v1
+## Read-only
 
-Actions (filing tickets, posting replies) are phase 2. They need write scopes Security hasn't approved, and they widen the blast radius before trust exists.
+No write actions in v1. They need scopes Security hasn't approved.
 
-## Out of scope for the pilot
+## Out of scope
 
-- Write actions in any system
-- Google Drive and Confluence (not used by the pilot team)
-- Answering from code (only READMEs and `docs/` are indexed)
-- SSO into the web UI (pilot users are provisioned manually)
+Write actions, Google Drive/Confluence, indexing source code (only READMEs and `docs/`), SSO for the web UI.

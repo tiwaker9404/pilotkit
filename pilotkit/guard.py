@@ -1,12 +1,6 @@
-"""Prompt-injection guard.
+"""Quarantine retrieved chunks that look like prompt injection.
 
-Retrieved content is data, never instructions. Chunks that look like they are
-trying to instruct the assistant are quarantined: kept out of the context,
-never quoted, and logged as a security event for the customer's security team.
-
-This is defense in depth. The real guarantee is that permission filtering
-happens before retrieval, so even an injection that slipped through could
-only ever see documents the asking user can already read.
+Not the real defense (that's the prefilter), just a second layer + a log entry for security.
 """
 from __future__ import annotations
 
